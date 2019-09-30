@@ -17,19 +17,28 @@ function App() {
 class MySqlPlaybench extends React.Component {
   constructor(props) {
     super(props);
-    api.createSqlConn();
     this.state = {
       connections: []
     }
   }
 
-  selectDatabase1 = (db) => {
-    this.setState({database1Name: db})
+  componentWillMount = async () => {
+    let firstConnConfig = await api.createSqlConn();
+    let firstConnTables = await api.getTables(0); // .then((res) => {console.log("pizza:" + res); res.flatMap(t => t.values())});
+    firstConnTables = firstConnTables.flatMap(t => t.values());
+    let firstConn = {config: firstConnConfig, tables: firstConnTables};
+    this.setState({ connections: [firstConn]});
+  }
+
+  selectDatabase = (connId, db) => {
+    let conn = this.state.connections[connId];
+    conn.database = db;
+    this.setState({connect: conn})
   }
 
   render() {
-    let db1 = this.state.database1Name;
-    return <div><DropdownDatabase1 currentDatabase={db1} databases={["a","b"]} selectDatabase={this.selectDatabase1} /></div>
+    let conns = this.state.connections;
+    return <div>{conns.map(c => <p>{(c.tables || []).join()}</p>)}</div>
   }
 }
 
