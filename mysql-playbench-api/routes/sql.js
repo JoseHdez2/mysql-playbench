@@ -44,17 +44,72 @@ router.post('/connection/:id/end', function (req, res, next) {
 });
 
 router.post('/:connId/query', function (req, res, next) {
-  let query = req.body.query;
   let connId = req.params.connId;
+  let query = req.body.query;
   callQuery(connId, query, res);
 });
 
 const callQuery = (connId, query, res) => {
-  console.log(`conn[${connId}]: query`);
+  console.log(`conn[${connId}]: ${query}`);
   connections[connId].query(query, function (error, results, fields) {
     if (error) res.status(400).send(`conn[${connId}]: ` + error);
     res.send(results);
   });
 }
+
+router.get('/:connId/tables', function (req, res, next) {
+  let connId = req.params.connId;
+  let query = `SHOW TABLES`;
+  callQuery(connId, query, res);
+});
+
+/*
+  Given a table and a field,
+  get all the distinct values this field currently takes.
+*/
+router.get('/:connId/:tableName/distinct-values/:fieldName', function(req, res, next) {
+  let connId = req.params.connId;
+  let tableName = req.params.tableName;
+  let fieldName = req.params.fieldName;
+  let query = `SELECT DISTINCT(${fieldName}) FROM ${tableName}`;
+  callQuery(connId, query, res);
+});
+
+/*
+  Given two tables and two fields that should match
+  retrieve all tuples that don't have a match (FK check).
+*/
+router.post('/:connId/fk-check', function(req, res, next) {
+  let connId = req.params.connId;
+  let table1Name = req.body.table1Name;
+  let field1Name = req.body.field1Name;
+  let table2Name = req.body.table2Name;
+  let field2Name = req.body.field2Name;
+  // let query = `SELECT * FROM ${table1Name} INNER JOIN ${table2Name} WHERE `;
+  callQuery(connId, query, res);
+});
+
+/*
+  Given a list of values L, and a table T with columns K, V that map each element of L,
+  return all values of L mapped to their corresponding values.
+*/
+router.post('/:connId/fk-check', function(req, res, next) {
+  let connId = req.params.connId;
+  let values = req.body.values;
+  let tableName = req.body.tableName;
+  let columnKName = req.body.columnKName;
+  let columnVName = req.body.columnVName;
+  // let query = `SELECT * FROM ${table1Name} INNER JOIN ${table2Name} WHERE `;
+  callQuery(connId, query, res);
+});
+
+/* Check that the open connection contains a matching row in the specified table */
+// router.post('/:connId/find-row/:tableName', function(req, res, next) {
+//   let connId = req.params.connId;
+//   let tableName = req.params.tableName;
+//   let columnValues = req.body.values;
+//   let query = `SELECT COUNT(*) FROM ${tableName} WHERE `;
+//   callQuery(connId, query, res);
+// });
 
 module.exports = router;
