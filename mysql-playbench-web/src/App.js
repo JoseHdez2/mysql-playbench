@@ -1,6 +1,7 @@
 import React from 'react';
 import {Dropdown} from 'react-bootstrap';
 import './App.css';
+import api from './api';
 
 function App() {
   return (
@@ -16,12 +17,9 @@ function App() {
 class MySqlPlaybench extends React.Component {
   constructor(props) {
     super(props);
+    api.createSqlConn();
     this.state = {
-      "url": null,
-      database1Name: "initialValue",
-      table1Name: null,
-      database2Name: null,
-      table2Name: null
+      connections: []
     }
   }
 
