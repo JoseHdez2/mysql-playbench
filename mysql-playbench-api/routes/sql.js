@@ -43,7 +43,7 @@ router.post('/query', function (req, res, next) {
   let query = req.body.query;
   console.log(query);
   connection.query(query, function (error, results, fields) {
-    if (error) res.send(400, error);
+    if (error) res.status(400).send(error);
     res.send(results);
   });
   // connection.end();
