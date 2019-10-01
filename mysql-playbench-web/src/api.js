@@ -2,16 +2,13 @@ let axios = require('axios');
 
 let url = "http://localhost:3000"
 
-const createSqlConn = (config) => {
-    axios.post(`${url}/sql/connection`, config)
-    .then(function (response) {
-        console.log(response);
-        return response;
-    })
-    .catch(function (error) {
+const createSqlConn = async (config) => {
+    try {
+        return axios.post(`${url}/sql/connection`, config)
+    } catch (error) {
         console.log(error);
         throw error;
-    });
+    }
 }
 
 const postSqlQuery = async (connId, request) => {
@@ -30,15 +27,12 @@ const postSqlQuery = async (connId, request) => {
 
 
 const getTables = async (connId) => {
-    axios.get(`${url}/sql/${connId}/tables`)
-    .then(function (response) {
-        console.log(response.data);
-        return response.data;
-    })
-    .catch(function (error) {
+    try {
+        return axios.get(`${url}/sql/${connId}/tables`)
+    } catch (error) {
         console.log(error);
         throw error;
-    });
+    }
 }
 
 
