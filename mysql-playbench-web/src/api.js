@@ -11,6 +11,15 @@ const createSqlConn = async (config) => {
     }
 }
 
+const getConfigs = async (config) => {
+    try {
+        return axios.post(`${url}/sql/configs`, config)
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
 const postSqlQuery = async (connId, request) => {
     axios.post(`${url}/sql/${connId}/query`, {
         'query': request
@@ -35,5 +44,14 @@ const getTables = async (connId) => {
     }
 }
 
+const loadTable = async (connId, tableName) => {
+    try {
+        return axios.get(`${url}/sql/${connId}/tables/${tableName}`)
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
 
-module.exports = {createSqlConn, postSqlQuery, getTables};
+
+module.exports = {createSqlConn, getConfigs, postSqlQuery, getTables, loadTable};

@@ -1,7 +1,16 @@
 {
-      "host": "localhost",
-      "port": 3306,
-      "user": "me",
-      "password": "secret",
-      "database": "my_db"
+      "configs": [{
+            "host": "localhost",
+            "port": 3306,
+            "user": "me",
+            "password": "secret",
+            "database": "my_db"
+      },
+      {
+            "host": "localhost2",
+            "port": 3306,
+            "user": "me2",
+            "password": "secret2",
+            "database": "my_db2"
+      }]
 }

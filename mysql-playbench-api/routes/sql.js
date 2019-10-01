@@ -4,18 +4,22 @@ var mysql = require('mysql')
 
 const fs = require("fs");
 const load = fn => JSON.parse(fs.readFileSync(fn));
-let config = load("./config.json");
+let configs = load("./config.json").configs;
 
 let connections = [];
+
+router.get('/configs', function(req, res, next) {
+  res.status(200).send(configs);
+});
 
 // intended for local use, so no problem with password encryption.
 router.post('/connection', function(req, res, next) {
   let newConfig = {
-    host: req.body.host || config.host,
-    user: req.body.user || config.user,
-    port: req.body.port || config.port,
-    password: req.body.password || config.password,
-    database: req.body.database || config.database
+    host: req.body.host || configs[0].host,
+    user: req.body.user || configs[0].user,
+    port: req.body.port || configs[0].port,
+    password: req.body.password || configs[0].password,
+    database: req.body.database || configs[0].database
   }
   console.log(newConfig);
   try {
@@ -63,6 +67,13 @@ router.get('/:connId/tables', function (req, res, next) {
   callQuery(connId, query, res);
 });
 
+router.get('/:connId/tables/:tableName', function (req, res, next) {
+  let connId = req.params.connId;
+  let tableName = req.params.tableName;
+  let query = `SELECT * FROM ${tableName}`;
+  callQuery(connId, query, res);
+});
+
 /*
   Given a table and a field,
   get all the distinct values this field currently takes.
@@ -93,7 +104,7 @@ router.post('/:connId/fk-check', function(req, res, next) {
   Given a list of values L, and a table T with columns K, V that map each element of L,
   return all values of L mapped to their corresponding values.
 */
-router.post('/:connId/fk-check', function(req, res, next) {
+router.post('/:connId/:tableName/mapped', function(req, res, next) {
   let connId = req.params.connId;
   let values = req.body.values;
   let tableName = req.body.tableName;
@@ -111,5 +122,8 @@ router.post('/:connId/fk-check', function(req, res, next) {
 //   let query = `SELECT COUNT(*) FROM ${tableName} WHERE `;
 //   callQuery(connId, query, res);
 // });
+
+
+// denormalizer
 
 module.exports = router;
