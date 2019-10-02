@@ -4,6 +4,7 @@ import './App.css';
 import api from './api';
 import util from 'util';
 import {RoTable, VirtualTable} from './util/table';
+import TimeAgo from 'react-timeago';
 
 function App() {
   return (
@@ -100,6 +101,7 @@ class MySqlPlaybench extends React.Component {
     let conns = this.state.connections || [];
     let settings = this.state.settings;
     let dark = settings.dark;
+    let events = this.state.events.map(e => {e.ago = <TimeAgo date={e.when}/> ; return e});
     return <div>
       <Button variant={dark ? "dark" : "light"} onClick={() => this.setState({settings: {...settings, dark: !dark}})}>{(dark ? "dark" : "light") + " mode"}</Button>
       <div>
@@ -108,7 +110,7 @@ class MySqlPlaybench extends React.Component {
       <ConnCreator configs={this.state.configs} createConn={this.createConn} />
       <div>
         <h4>Event log</h4>
-        <RoTable tableData={this.state.events} settings={this.state.settings} />
+        <RoTable tableData={events} settings={this.state.settings} />
       </div>
     </div>
   }
