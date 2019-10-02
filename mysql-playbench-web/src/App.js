@@ -3,7 +3,7 @@ import {Button, Card, Dropdown, DropdownButton, Table} from 'react-bootstrap';
 import './App.css';
 import api from './api';
 import util from 'util';
-import {RoTable, Example, VirtualTable} from './util/table';
+import {RoTable, VirtualTable} from './util/table';
 
 function App() {
   return (
@@ -12,7 +12,6 @@ function App() {
         MySQL Playbench
       </header>
       <MySqlPlaybench />
-      <Example />
     </div>
   );
 }

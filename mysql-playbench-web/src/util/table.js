@@ -28,50 +28,28 @@ export default function useWindowDimensions() {
     return windowDimensions;
 }
 
-const ExampleCell = ({ columnIndex, rowIndex, data, style }) => (
-  <div style={style}>
-    {data[rowIndex][columnIndex]}
-  </div>
-);
- 
-export const Example = () => {
-  const { height, width } = useWindowDimensions();
-  let datatta = [[1,2,3],[4,5,6],[7,8,9]];
-  return (<Grid
-    columnCount={3}
-    columnWidth={300}
-    height={150}
-    rowCount={datatta.length}
-    rowHeight={35}
-    itemData={datatta}
-    width={width/2}
-  >
-    {ExampleCell}
-  </Grid>
-)};
-
-const TableCell = ({ columnIndex, rowIndex, data, style }) => (
+const VirtTableCell = ({ columnIndex, rowIndex, data, style }) => (
     <div style={style}>
       {data[rowIndex][columnIndex]}
     </div>
   );
    
-  export const VirtualTable = ({tableData}) => {
-    const { height, width } = useWindowDimensions();
-    const headers = inferColumnNames(tableData);
-    const tableData2 = isNonEmptyArr(tableData) ? [headers, ...tableData.map(row => Object.values(row))] : []
-    return (<Grid
-      columnCount={headers.length}
-      columnWidth={300}
-      height={150}
-      rowCount={tableData2.length}
-      rowHeight={35}
-      itemData={tableData2}
-      width={width/2}
-    >
-      {ExampleCell}
-    </Grid>
-  )};
+export const VirtualTable = ({tableData}) => {
+const { height, width } = useWindowDimensions();
+const headers = inferColumnNames(tableData);
+const tableData2 = isNonEmptyArr(tableData) ? [headers, ...tableData.map(row => Object.values(row))] : []
+return (<Grid
+    columnCount={headers.length}
+    columnWidth={300}
+    height={150}
+    rowCount={tableData2.length}
+    rowHeight={35}
+    itemData={tableData2}
+    width={width/2}
+>
+    {VirtTableCell}
+</Grid>
+)};
 
 export const RoTable = ({tableData, settings}) => (
     <Table striped bordered hover size="sm" variant={settings.dark ? "dark":"light"}>
