@@ -12,6 +12,12 @@ router.get('/configs', function(req, res, next) {
   res.status(200).send(configs);
 });
 
+//                                   _   _                 
+//    ___ ___  _ __  _ __   ___  ___| |_(_) ___  _ __  ___ 
+//   / __/ _ \| '_ \| '_ \ / _ \/ __| __| |/ _ \| '_ \/ __|
+//  | (_| (_) | | | | | | |  __/ (__| |_| | (_) | | | \__ \
+//   \___\___/|_| |_|_| |_|\___|\___|\__|_|\___/|_| |_|___/
+
 // intended for local use, so no problem with password encryption.
 router.post('/connection', function(req, res, next) {
   let newConfig = {
@@ -61,6 +67,12 @@ const callQuery = (connId, query, res) => {
   });
 }
 
+//  _        _     _           
+// | |_ __ _| |__ | | ___  ___ 
+// | __/ _` | '_ \| |/ _ \/ __|
+// | || (_| | |_) | |  __/\__ \
+//  \__\__,_|_.__/|_|\___||___/
+
 router.get('/:connId/tables', function (req, res, next) {
   let connId = req.params.connId;
   let query = `SHOW TABLES`;
@@ -70,7 +82,9 @@ router.get('/:connId/tables', function (req, res, next) {
 router.get('/:connId/tables/:tableName', function (req, res, next) {
   let connId = req.params.connId;
   let tableName = req.params.tableName;
-  let query = `SELECT * FROM ${tableName}`;
+  let limit = req.query.limit;
+  let offset = req.query.offset;
+  let query = `SELECT * FROM ${tableName} LIMIT 100`;
   callQuery(connId, query, res);
 });
 
@@ -78,7 +92,7 @@ router.get('/:connId/tables/:tableName', function (req, res, next) {
   Given a table and a field,
   get all the distinct values this field currently takes.
 */
-router.get('/:connId/:tableName/distinct-values/:fieldName', function(req, res, next) {
+router.get('/:connId/tables/:tableName/distinct-values/:fieldName', function(req, res, next) {
   let connId = req.params.connId;
   let tableName = req.params.tableName;
   let fieldName = req.params.fieldName;
@@ -87,24 +101,10 @@ router.get('/:connId/:tableName/distinct-values/:fieldName', function(req, res, 
 });
 
 /*
-  Given two tables and two fields that should match
-  retrieve all tuples that don't have a match (FK check).
-*/
-router.post('/:connId/fk-check', function(req, res, next) {
-  let connId = req.params.connId;
-  let table1Name = req.body.table1Name;
-  let field1Name = req.body.field1Name;
-  let table2Name = req.body.table2Name;
-  let field2Name = req.body.field2Name;
-  // let query = `SELECT * FROM ${table1Name} INNER JOIN ${table2Name} WHERE `;
-  callQuery(connId, query, res);
-});
-
-/*
   Given a list of values L, and a table T with columns K, V that map each element of L,
   return all values of L mapped to their corresponding values.
 */
-router.post('/:connId/:tableName/mapped', function(req, res, next) {
+router.post('/:connId/tables/:tableName/mapped', function(req, res, next) {
   let connId = req.params.connId;
   let values = req.body.values;
   let tableName = req.body.tableName;
@@ -122,6 +122,26 @@ router.post('/:connId/:tableName/mapped', function(req, res, next) {
 //   let query = `SELECT COUNT(*) FROM ${tableName} WHERE `;
 //   callQuery(connId, query, res);
 // });
+
+//        _               _        
+//    ___| |__   ___  ___| | _____ 
+//   / __| '_ \ / _ \/ __| |/ / __|
+//  | (__| | | |  __/ (__|   <\__ \
+//   \___|_| |_|\___|\___|_|\_\___/
+
+/*
+  Given two tables and two fields that should match
+  retrieve all tuples that don't have a match (FK check).
+*/
+router.post('/:connId/fk-check', function(req, res, next) {
+  let connId = req.params.connId;
+  let table1Name = req.body.table1Name;
+  let field1Name = req.body.field1Name;
+  let table2Name = req.body.table2Name;
+  let field2Name = req.body.field2Name;
+  // let query = `SELECT * FROM ${table1Name} INNER JOIN ${table2Name} WHERE `;
+  callQuery(connId, query, res);
+});
 
 
 // denormalizer
