@@ -8,6 +8,8 @@ let configs = load("./config.json").configs;
 
 let connections = [];
 
+const DEFAULT_LIMIT = 100;
+
 router.get('/configs', function(req, res, next) {
   res.status(200).send(configs);
 });
@@ -82,9 +84,9 @@ router.get('/:connId/tables', function (req, res, next) {
 router.get('/:connId/tables/:tableName', function (req, res, next) {
   let connId = req.params.connId;
   let tableName = req.params.tableName;
-  let limit = req.query.limit;
-  let offset = req.query.offset;
-  let query = `SELECT * FROM ${tableName} LIMIT 100`;
+  let limit = req.query.limit || DEFAULT_LIMIT;
+  let offset = req.query.offset || null;
+  let query = `SELECT * FROM ${tableName} LIMIT ${offset ? offset + ", " : ""} ${limit}`;
   callQuery(connId, query, res);
 });
 
@@ -133,7 +135,7 @@ router.post('/:connId/tables/:tableName/mapped', function(req, res, next) {
   Given two tables and two fields that should match
   retrieve all tuples that don't have a match (FK check).
 */
-router.post('/:connId/fk-check', function(req, res, next) {
+router.post('/:connId/check', function(req, res, next) {
   let connId = req.params.connId;
   let table1Name = req.body.table1Name;
   let field1Name = req.body.field1Name;
@@ -143,6 +145,22 @@ router.post('/:connId/fk-check', function(req, res, next) {
   callQuery(connId, query, res);
 });
 
+// check collations
+
+// check empty tables
+router.post('/:connId/check/empty-tables', function(req, res, next) {
+  let query = ```
+  select table_schema as database_name, table_name
+    from information_schema.tables
+    where table_type = 'BASE TABLE'
+          and table_rows = 0
+          and table_schema not in('information_schema', 'sys', 'performance_schema', 'mysql')
+          -- and table_schema = 'sakila' -- put your database name here
+    order by table_schema, table_name;
+  ```;
+  let connId = req.params.connId;
+  callQuery(connId, query, res);
+});
 
 // denormalizer
 
