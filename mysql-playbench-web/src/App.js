@@ -122,16 +122,21 @@ const ConnectionView = ({conn, onSelectTable, settings}) => (
     <Card.Subtitle>host: [{conn.config.host}], user: [{conn.config.user}]</Card.Subtitle>
     <span>
       Selected table:
-      <DropdownSelectorConn connId={conn.id} currIt={conn.selTable || '...'} items={conn.tables} onSelect={onSelectTable} />
+      <DropdownSelectTable connId={conn.id} currIt={conn.selTable || '...'} tableNames={conn.tables} onSelect={onSelectTable} />
     </span>
     <VirtualTable tableData={conn.tableData} />
 {/*     <RoTable tableData={conn.tableData} settings={settings}/> */}
   </Card>
 );
 
-const DropdownSelectorConn = ({connId, currIt, items, onSelect}) => (
-  <DropdownButton id="dropdown-btn-conn" title={currIt}>
-      {items.map(it => <Dropdown.Item onSelect={() => onSelect(connId, it)}>{it}</Dropdown.Item>)}
+const DropdownSelectTable = ({connId, currTableName, tableNames, onSelect}) => (
+  <DropdownButton id="dropdown-btn-conn" title={currTableName}>
+      {tableNames.map(tn => <Dropdown.Item onSelect={() => onSelect(connId, tn)}>{tn}</Dropdown.Item>)}
+  </DropdownButton>);
+
+const DropdownSelectField = ({connId, currFieldName, fieldNames, onSelect}) => (
+  <DropdownButton id="dropdown-btn-conn" title={currFieldName}>
+      {fieldNames.map(f => <Dropdown.Item onSelect={() => onSelect(connId, f)}>{f}</Dropdown.Item>)}
   </DropdownButton>);
 
 const DropdownSelector = ({title, items, onSelect}) => (
