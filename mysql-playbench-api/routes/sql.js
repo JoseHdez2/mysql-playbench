@@ -86,7 +86,8 @@ router.get('/:connId/tables/:tableName', function (req, res, next) {
   let tableName = req.params.tableName;
   let limit = req.query.limit || DEFAULT_LIMIT;
   let offset = req.query.offset || null;
-  let query = `SELECT * FROM ${tableName} LIMIT ${offset ? offset + ", " : ""} ${limit}`;
+  let where = req.query.where ? "WHERE " + req.query.where : "";
+  let query = `SELECT * FROM ${tableName} ${where} LIMIT ${offset ? offset + ", " : ""} ${limit}`;
   callQuery(connId, query, res);
 });
 
