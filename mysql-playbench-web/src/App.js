@@ -1,8 +1,9 @@
 import React from 'react';
-import {Button, Card, Dropdown, Table} from 'react-bootstrap';
+import {Button, Card, Dropdown, DropdownButton, Table} from 'react-bootstrap';
 import './App.css';
 import api from './api';
 import util from 'util';
+import {RoTable, Example, VirtualTable} from './util/table';
 
 function App() {
   return (
@@ -10,8 +11,8 @@ function App() {
       <header className="App-header">
         MySQL Playbench
       </header>
-      downtown
       <MySqlPlaybench />
+      <Example />
     </div>
   );
 }
@@ -20,10 +21,20 @@ class MySqlPlaybench extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      configs: [], // connection configs
-      connections: [],
-      clipboards: []
+      configs: [], // loaded connection configs
+      connections: [], // currently open connections
+      clipboards: [], // data that the user has clipped
+      events: [], // local events log
+      settings: { // webapp visualization settings
+        dark: false,
+        size: "jumbo"
+      }
     }
+  }
+
+  getConfigs = async () => {
+    let configs = await api.getConfigs();
+    this.setState({configs: configs});
   }
 
   createConn = async (config) => {
@@ -32,95 +43,122 @@ class MySqlPlaybench extends React.Component {
     let connTables = await api.getTables(connId).then(res => res.data);
     connTables = connTables.flatMap(t => Object.values(t));
     let newConn = { id: connId, config: firstConnConfig, tables: connTables };
-    this.setState({ connections: [...this.state.connections, newConn] });
+    this.setState({ 
+      connections: [...this.state.connections, newConn],
+      events: [...this.state.events, {when: new Date().toUTCString(), what: `Created new connection [${connId}].`}]
+     });
   }
 
   componentWillMount = async () => {
     this.createConn();
+    this.getConfigs();
   }
-
-  // selectDatabase = (connId, db) => {
-  //   let conn = this.state.connections[connId];
-  //   conn.database = db;
-  //   this.setState({connect: conn})
-  // }
 
   selectTable = async (connId, table) => {
     let connections = this.state.connections;
     connections[connId].selTable = table;
-    await this.setState({ connections: connections })
+    await this.setState({ 
+      connections: connections,
+      events: [...this.state.events, {when: new Date().toUTCString(), what: `[Conn ${connId}]: Selected table [${table}].`}]
+    })
     this.loadTable(connId, table); // bad practice?
   }
 
   loadTable = async (connId, table) => {
     let connections = this.state.connections;
     connections[connId].tableData = await api.loadTable(connId, table).then(res => res.data);
-    this.setState({ connections: connections })
+    this.setState({ 
+      connections: connections,
+      events: [...this.state.events, {when: new Date().toUTCString(), what: `[Conn ${connId}]: Table [${table}] has loaded.`}]
+    })
+  }
+
+  saveSettings = () => {
+    localStorage.setItem("settings", JSON.stringify(this.state.settings));
+    this.setState({
+      events: [...this.state.events, {when: new Date().toUTCString(), what: `Saved user settings in localStorage.`}]
+    })
+  }
+
+  loadSettings = () => {
+    let str = localStorage.getItem("settings");
+    if(!str) {
+      let err = `Failed to load user settings from localStorage.`;
+      console.log(err);
+      this.setState({
+        // events: [...this.state.events, {when: new Date().toUTCString(), what: err}]
+      })
+    } else {
+      let settings = JSON.parse(str);
+      this.setState({
+        settings: settings,
+        // events: [...this.state.events, {when: new Date().toUTCString(), what: `Loaded user settings from localStorage.`}]
+      })
+    }
   }
 
   render() {
     let conns = this.state.connections || [];
-    console.log(`marinara: ${util.inspect(conns)}`)
+    let settings = this.state.settings;
+    let dark = settings.dark;
     return <div>
+      <Button variant={dark ? "dark" : "light"} onClick={() => this.setState({settings: {...settings, dark: !dark}})}>{(dark ? "dark" : "light") + " mode"}</Button>
       <div>
-        {conns.map(c => <ConnectionView conn={c} onSelectTable={this.selectTable}/>)}
+        {conns.map(c => <ConnectionView conn={c} onSelectTable={this.selectTable} settings={settings}/>)}
       </div>
       <ConnCreator configs={this.state.configs} createConn={this.createConn} />
+      <div>
+        <h4>Event log</h4>
+        <RoTable tableData={this.state.events} settings={this.state.settings} />
+      </div>
     </div>
   }
 }
 
-const ConnectionView = ({conn, onSelectTable}) => (
+const ConnectionView = ({conn, onSelectTable, settings}) => (
   <Card>
     <Card.Title>Connection [{conn.id}]</Card.Title>
     <Card.Subtitle>host: [{conn.config.host}], user: [{conn.config.user}]</Card.Subtitle>
     <span>
       Selected table:
-      <DropdownSelector connId={conn.id} currIt={conn.selTable || '...'} items={conn.tables} onSelect={onSelectTable} />
+      <DropdownSelectorConn connId={conn.id} currIt={conn.selTable || '...'} items={conn.tables} onSelect={onSelectTable} />
     </span>
-    <RoTable tableData={conn.tableData} />
+    <VirtualTable tableData={conn.tableData} />
+{/*     <RoTable tableData={conn.tableData} settings={settings}/> */}
   </Card>
 );
 
-const DropdownSelector = ({connId, currIt, items, onSelect}) => (
-  <Dropdown>
-    <Dropdown.Toggle id="dropdown-basic">
-      {currIt}
-    </Dropdown.Toggle>
-
-    <Dropdown.Menu>
+const DropdownSelectorConn = ({connId, currIt, items, onSelect}) => (
+  <DropdownButton id="dropdown-btn-conn" title={currIt}>
       {items.map(it => <Dropdown.Item onSelect={() => onSelect(connId, it)}>{it}</Dropdown.Item>)}
-    </Dropdown.Menu>
-  </Dropdown>
-)
+  </DropdownButton>);
 
-const RoTable = ({tableData}) => (
-  <Table striped bordered hover>
-    <thead>
-      {inferColumnNames(tableData).map(h => <th>{h}</th>)}
-    </thead>
-    <tbody>
-      {!tableData ? "" : tableData.map(row => <tr>{Object.values(row).map(field => <td>{field}</td>)}</tr>)}
-    </tbody>
-  </Table>
-)
-
-const inferColumnNames = (tableData) => !tableData ? [] :
-                tableData.map(row => Object.keys(row))
-                .flatMap(a => a)
-                .filter((v, i, a) => a.indexOf(v) === i); // unique values (https://stackoverflow.com/a/14438954/3399416)
+const DropdownSelector = ({title, items, onSelect}) => (
+  <DropdownButton id="dropdown-btn-selector" title={title}>
+    {items.map(it => <Dropdown.Item onSelect={() => onSelect(it)}>{it}</Dropdown.Item>)}
+  </DropdownButton>);
 
 class ConnCreator extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      configs: this.props.configs || [],
-      selConfig: {}
+      selInd: 0
     }
   }
 
+  onSelect = (index) => {
+    this.setState({
+      selInd: index
+    });
+  }
+
   render() {
+    let configs = this.props.configs;
+    let selConfig = configs[this.state.selInd];
+    let connTitle = selConfig ? `${selConfig.user}@${selConfig.host}:${selConfig.port}` : "none"
     return <div>
+      <DropdownSelector title={connTitle} items={configs} onSelect={this.onSelect} />
+      If you wish to add configurations, please modify the <code>config.json</code> file.
       <Button onClick={() => this.props.createConn(this.state.config)} variant="success">New Connection</Button>
     </div>
   }
