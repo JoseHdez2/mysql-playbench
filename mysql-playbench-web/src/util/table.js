@@ -1,6 +1,6 @@
 import { FixedSizeGrid as Grid } from 'react-window';
 import React from 'react';
-import {Table} from 'react-bootstrap';
+import {Badge, Table} from 'react-bootstrap';
 import {useEffect, useState} from 'react';
 
 // https://stackoverflow.com/a/36862446/3399416
@@ -30,7 +30,10 @@ export default function useWindowDimensions() {
 
 const VirtTableCell = ({ columnIndex, rowIndex, data, style, onSelect }) => (
     <div style={style}>
-      {data[rowIndex][columnIndex]}
+      {rowIndex == 0 ? 
+        <Badge style={{color: "red"}}>{data[rowIndex][columnIndex]}</Badge> : 
+        data[rowIndex][columnIndex]
+      }
     </div>
   );
    
