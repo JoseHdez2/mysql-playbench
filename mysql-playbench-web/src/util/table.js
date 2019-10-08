@@ -28,13 +28,13 @@ export default function useWindowDimensions() {
     return windowDimensions;
 }
 
-const VirtTableCell = ({ columnIndex, rowIndex, data, style }) => (
+const VirtTableCell = ({ columnIndex, rowIndex, data, style, onSelect }) => (
     <div style={style}>
       {data[rowIndex][columnIndex]}
     </div>
   );
    
-export const VirtualTable = ({tableData}) => {
+export const VirtualTable = ({tableData, onSelect}) => {
 const { height, width } = useWindowDimensions();
 const headers = inferColumnNames(tableData);
 const tableData2 = isNonEmptyArr(tableData) ? [headers, ...tableData.map(row => Object.values(row))] : []

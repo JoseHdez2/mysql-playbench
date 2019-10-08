@@ -49,28 +49,15 @@ class MySqlPlaybench extends React.Component {
      });
   }
 
+  logEvent = async (message) => {
+    await this.setState({
+      events: [...this.state.events, {when: new Date().toUTCString(), what: message}]
+    })
+  }
+
   componentWillMount = async () => {
     this.createConn();
     this.getConfigs();
-  }
-
-  selectTable = async (connId, table) => {
-    let connections = this.state.connections;
-    connections[connId].selTable = table;
-    await this.setState({ 
-      connections: connections,
-      events: [...this.state.events, {when: new Date().toUTCString(), what: `[Conn ${connId}]: Selected table [${table}].`}]
-    })
-    this.loadTable(connId, table); // bad practice?
-  }
-
-  loadTable = async (connId, table) => {
-    let connections = this.state.connections;
-    connections[connId].tableData = await api.loadTable(connId, table).then(res => res.data);
-    this.setState({ 
-      connections: connections,
-      events: [...this.state.events, {when: new Date().toUTCString(), what: `[Conn ${connId}]: Table [${table}] has loaded.`}]
-    })
   }
 
   saveSettings = () => {
@@ -105,7 +92,7 @@ class MySqlPlaybench extends React.Component {
     return <div>
       <Button variant={dark ? "dark" : "light"} onClick={() => this.setState({settings: {...settings, dark: !dark}})}>{(dark ? "dark" : "light") + " mode"}</Button>
       <div>
-        {conns.map(c => <ConnectionView conn={c} onSelectTable={this.selectTable} settings={settings}/>)}
+        {conns.map(c => <ConnectionView conn={c} settings={settings} logEvent={this.logEvent}/>)}
       </div>
       <ConnCreator configs={this.state.configs} createConn={this.createConn} />
       <div>
@@ -116,20 +103,60 @@ class MySqlPlaybench extends React.Component {
   }
 }
 
-const ConnectionView = ({conn, onSelectTable, settings}) => (
-  <Card>
+class ConnectionView extends React.Component {
+
+  constructor(props) {
+    super(props);
+    // ({conn, onSelectTable, settings})
+
+    this.state = {
+      selTable: null,
+      tables: []
+    }
+  }
+
+  componentWillMount = async () => {
+    let connTables = await api.getTables(this.props.connId).then(res => res.data);
+    connTables = connTables.flatMap(t => Object.values(t));
+    this.setState({tables: connTables});
+  }
+
+  selectTable = async (connId, table) => {
+    await this.setState({ 
+      selTable: table
+    })
+    this.props.logEvent(`[Conn ${connId}]: Selected table [${table}].`);
+    this.loadTable(connId, table); // bad practice?
+  }
+  
+  loadTable = async (connId, table) => {
+    let tableData = await api.loadTable(connId, table).then(res => res.data);
+    this.setState({ 
+      tableData: tableData
+    })
+    this.props.logEvent(`[Conn ${connId}]: Table [${table}] has loaded.`);
+  }
+
+  render = () => {
+    let conn = this.props.conn;
+    return <Card>
     <Card.Title>Connection [{conn.id}]</Card.Title>
     <Card.Subtitle>host: [{conn.config.host}], user: [{conn.config.user}]</Card.Subtitle>
     <span>
       Selected table:
-      <DropdownSelectTable connId={conn.id} currIt={conn.selTable || '...'} tableNames={conn.tables} onSelect={onSelectTable} />
+      <DropdownSelectTable connId={conn.id} currIt={conn.selTable || '...'} tableNames={conn.tables} onSelect={this.selectTable} />
     </span>
-    <VirtualTable tableData={conn.tableData} />
-{/*     <RoTable tableData={conn.tableData} settings={settings}/> */}
-  </Card>
-);
+    <VirtualTable tableData={this.state.tableData} />
+  {/*     <RoTable tableData={conn.tableData} settings={settings}/> */}
+  </Card>};
+}
 
 const DropdownSelectTable = ({connId, currTableName, tableNames, onSelect}) => (
+  <DropdownButton id="dropdown-btn-conn" title={currTableName}>
+      {tableNames.map(tn => <Dropdown.Item onSelect={() => onSelect(connId, tn)}>{tn}</Dropdown.Item>)}
+  </DropdownButton>);
+
+const ListSelectTable = ({connId, currTableName, tableNames, onSelect}) => (
   <DropdownButton id="dropdown-btn-conn" title={currTableName}>
       {tableNames.map(tn => <Dropdown.Item onSelect={() => onSelect(connId, tn)}>{tn}</Dropdown.Item>)}
   </DropdownButton>);
