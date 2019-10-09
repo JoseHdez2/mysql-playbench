@@ -48,7 +48,7 @@ return (<Grid
     rowCount={tableData2.length}
     rowHeight={35}
     itemData={tableData2}
-    width={width/2}
+    width={width*.98}
 >
     {VirtTableCell}
 </Grid>
