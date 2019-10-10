@@ -40,9 +40,7 @@ class MySqlPlaybench extends React.Component {
   createConn = async (config) => {
     let firstConnConfig = await api.createSqlConn(config).then(res => res.data);
     let connId = this.state.connections.length;
-    let connTables = await api.getTables(connId).then(res => res.data);
-    connTables = connTables.flatMap(t => Object.values(t));
-    let newConn = { id: connId, config: firstConnConfig, tables: connTables };
+    let newConn = { id: connId, config: firstConnConfig };
     this.setState({ 
       connections: [...this.state.connections, newConn],
       events: [...this.state.events, {when: new Date().toUTCString(), what: `Created new connection [${connId}].`}]
@@ -52,6 +50,24 @@ class MySqlPlaybench extends React.Component {
   logEvent = async (message) => {
     await this.setState({
       events: [...this.state.events, {when: new Date().toUTCString(), what: message}]
+    })
+  }
+
+  createClipboard = async () => {
+    let clipboards = this.state.clipboards;
+    let newClipId = clipboards.length;
+    await this.setState({
+      clipboards: [...this.state.clipboards, {id: newClipId, content: {}}]
+    })
+  }
+
+  setClipboard = async (clipId, content) => {
+    let clipboards = this.state.clipboards;
+    do {
+      this.createClipboard();
+    } while (clipId >= clipboards.length);
+    await this.setState({
+      clipboards: clipboards.map(c => c.id != clipId? c : {...c, content: content})
     })
   }
 
@@ -107,16 +123,17 @@ class ConnectionView extends React.Component {
 
   constructor(props) {
     super(props);
-    // ({conn, onSelectTable, settings})
+    // ({conn, onSelectTable, clipboards, settings})
 
     this.state = {
       selTable: null,
-      tables: []
+      tableData: null,
+      tables: [],
     }
   }
 
   componentWillMount = async () => {
-    let connTables = await api.getTables(this.props.connId).then(res => res.data);
+    let connTables = await api.getTables(this.props.conn.id).then(res => res.data);
     connTables = connTables.flatMap(t => Object.values(t));
     this.setState({tables: connTables});
   }
@@ -139,12 +156,13 @@ class ConnectionView extends React.Component {
 
   render = () => {
     let conn = this.props.conn;
+    let tables = this.state.tables;
     return <Card>
     <Card.Title>Connection [{conn.id}]</Card.Title>
     <Card.Subtitle>host: [{conn.config.host}], user: [{conn.config.user}]</Card.Subtitle>
     <span>
       Selected table:
-      <DropdownSelectTable connId={conn.id} currIt={conn.selTable || '...'} tableNames={conn.tables} onSelect={this.selectTable} />
+      <DropdownSelectTable connId={conn.id} currTableName={this.state.selTable || '...'} tableNames={tables} onSelect={this.selectTable} />
     </span>
     <VirtualTable tableData={this.state.tableData} />
   {/*     <RoTable tableData={conn.tableData} settings={settings}/> */}
@@ -157,9 +175,9 @@ const DropdownSelectTable = ({connId, currTableName, tableNames, onSelect}) => (
   </DropdownButton>);
 
 const ListSelectTable = ({connId, currTableName, tableNames, onSelect}) => (
-  <DropdownButton id="dropdown-btn-conn" title={currTableName}>
+  <VirtualTable>
       {tableNames.map(tn => <Dropdown.Item onSelect={() => onSelect(connId, tn)}>{tn}</Dropdown.Item>)}
-  </DropdownButton>);
+  </VirtualTable>);
 
 const DropdownSelectField = ({connId, currFieldName, fieldNames, onSelect}) => (
   <DropdownButton id="dropdown-btn-conn" title={currFieldName}>
