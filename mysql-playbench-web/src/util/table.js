@@ -32,7 +32,7 @@ const VirtTableCell = ({ columnIndex, rowIndex, data, style, onSelect }) => {
   if(rowIndex == 0){ 
     return <div style={style}><Badge style={{color: "red"}}>{data[rowIndex][columnIndex]}</Badge></div>
   } else {
-    return <div style={style} onClick={() => onSelect(columnIndex, rowIndex)}>
+    return <div style={style} onClick={onSelect ? () => onSelect(columnIndex, rowIndex) : console.log("No onSelect()")}>
       {data[rowIndex][columnIndex]}
     </div>
   }
